@@ -284,10 +284,11 @@ def main():
         torch_dtype=torch.bfloat16,
         trust_remote_code=True,
         device_map={"": "cuda:0"},
-        low_cpu_mem_usage=True
+        low_cpu_mem_usage=True,
+        local_files_only=True
     )
     tokenizer = AutoTokenizer.from_pretrained(
-        MERGED_MODEL, trust_remote_code=True, use_fast=False
+        MERGED_MODEL, trust_remote_code=True, use_fast=False, local_files_only=True
     )
     model.eval()
     print("✅ Model loaded!")
