@@ -19,6 +19,10 @@ IMAGENET_STD = (0.229, 0.224, 0.225)
 WEBCAM_INDEX = 0           # change to 1 if /dev/video0 doesn't work
 INPUT_SIZE = 448
 
+# --- Headless Mode (for device without monitor) ---
+HEADLESS_MODE = True       # Set to False if you want to display video on a monitor
+ENABLE_LOGGING = True      # Log to console/file for debugging
+
 # --- Change-threshold inference control ---
 # This is the thresholding logic from the notebook:
 # score = mean absolute grayscale frame difference / 255.
@@ -305,7 +309,8 @@ def main():
         f"   CHANGE_THRESHOLD={CHANGE_THRESHOLD}\n"
         f"   MIN_INFERENCE_INTERVAL={MIN_INFERENCE_INTERVAL}s\n"
         f"   FORCE_INFERENCE_INTERVAL={FORCE_INFERENCE_INTERVAL}s\n"
-        "   Press Q or ESC to quit.\n"
+        f"   HEADLESS_MODE={HEADLESS_MODE}\n"
+        "   Press Q or ESC to quit (if display enabled).\n"
     )
 
     # Reference frame is the frame used for the last inference.
@@ -315,9 +320,13 @@ def main():
     last_inference_start_ts = 0.0
     status_text = "Waiting for first frame..."
 
-    window_name = "Blind Assist - Live Feed"
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(window_name, 800, 600)
+    if not HEADLESS_MODE:
+        window_name = "Blind Assist - Live Feed"
+        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(window_name, 800, 600)
+    else:
+        window_name = None
+        print("🔇 Running in HEADLESS mode (no display). Audio output only.")
 
     while True:
         ret, frame = cap.read()
@@ -410,23 +419,24 @@ def main():
                     "changed=False | mode=stable"
                 )
 
-        display_frame = draw_overlay(
-            frame.copy(),
-            latest_response,
-            status_text,
-            inference_running,
-            frame_count
-        )
+        if not HEADLESS_MODE:
+            display_frame = draw_overlay(
+                frame.copy(),
+                latest_response,
+                status_text,
+                inference_running,
+                frame_count
+            )
+            cv2.imshow(window_name, display_frame)
 
-        cv2.imshow(window_name, display_frame)
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord("q") or key == 27:  # Q or ESC
-            print("\n🛑 Stopping...")
-            break
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q") or key == 27:  # Q or ESC
+                print("\n🛑 Stopping...")
+                break
 
     cap.release()
-    cv2.destroyAllWindows()
+    if not HEADLESS_MODE:
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
