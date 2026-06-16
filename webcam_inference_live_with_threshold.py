@@ -9,6 +9,7 @@ from PIL import Image as PILImage
 from transformers import AutoModel, AutoTokenizer
 import torchvision.transforms as T
 from torchvision.transforms.functional import InterpolationMode
+import pyttsx3
 
 # --- Configuration ---
 MERGED_MODEL = "blind-assist/internvl3-1b-merged-v1"
@@ -50,6 +51,38 @@ latest_response = "Waiting for first inference..."
 inference_running = False
 last_inference_time = 0.0
 frame_count = 0
+
+# --- Text-to-Speech (TTS) ---
+tts_engine = None
+
+
+def init_tts():
+    """Initialize the TTS engine."""
+    global tts_engine
+    try:
+        tts_engine = pyttsx3.init()
+        tts_engine.setProperty('rate', 150)  # Speech rate (slower for clarity)
+        tts_engine.setProperty('volume', 0.9)  # Volume (0-1)
+        print("✅ TTS engine initialized")
+    except Exception as e:
+        print(f"⚠️  TTS initialization failed: {e}")
+        tts_engine = None
+
+
+def speak_response(text):
+    """Speak the text in a background thread to avoid blocking video."""
+    if tts_engine is None:
+        return
+    
+    def _speak():
+        try:
+            tts_engine.say(text)
+            tts_engine.runAndWait()
+        except Exception as e:
+            print(f"⚠️  TTS error: {e}")
+    
+    t = threading.Thread(target=_speak, daemon=True)
+    t.start()
 
 
 def build_transform(input_size):
@@ -134,6 +167,8 @@ def run_inference_thread(model, tokenizer, image: PILImage.Image):
         print(f"\n⏱️  {elapsed:.2f}s")
         print(f"🔊 {response}")
         print("-" * 60)
+        # Speak the response
+        speak_response(response)
     except RuntimeError as e:
         latest_response = f"Error: {str(e)[:60]}"
         print(f"❌ Inference error: {e}")
@@ -237,6 +272,7 @@ def main():
     global latest_response, inference_running, last_inference_time, frame_count
 
     patch_qwen2_to_avoid_float32(None)
+    init_tts()
 
     print(f"🔄 Loading model: {MERGED_MODEL}")
     model = AutoModel.from_pretrained(
