@@ -17,6 +17,8 @@ ExecStart=/home/blind/internvl3/myenv/bin/python -u /home/blind/internvl3/Intern
 
 Restart=always
 RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=20
 
 [Install]
 WantedBy=multi-user.target
