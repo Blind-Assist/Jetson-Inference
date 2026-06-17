@@ -1,18 +1,22 @@
 [Unit]
-Description=Blind Assist - Real-time audio guidance system
-After=network.target
-Wants=network-online.target
+Description=Blind Assist Inference Service
+After=multi-user.target sound.target
+Wants=sound.target
 
 [Service]
 Type=simple
-User=jetson
-WorkingDirectory=/home/jetson/Projects/Jetson-Inference
-ExecStart=/usr/bin/python3 /home/jetson/Projects/Jetson-Inference/webcam_inference_live_with_threshold.py
-Restart=on-failure
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-Environment="PYTHONUNBUFFERED=1"
+User=blind
+WorkingDirectory=/home/blind/internvl3
+
+Environment=HOME=/home/blind
+Environment=HF_HOME=/home/blind/.cache/huggingface
+Environment=PYTHONUNBUFFERED=1
+
+ExecStartPre=/bin/sleep 20
+ExecStart=/home/blind/internvl3/myenv/bin/python -u /home/blind/internvl3/InternVL/internvl_chat/webcam_audio.py
+
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
