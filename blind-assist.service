@@ -1,11 +1,13 @@
 [Unit]
-Description=Blind Assist Inference Service
+Description=Blind Assist VLM Camera Audio Service
 After=multi-user.target sound.target
 Wants=sound.target
 
 [Service]
 Type=simple
 User=blind
+Group=blind
+
 WorkingDirectory=/home/blind/internvl3
 
 Environment=HOME=/home/blind
@@ -17,8 +19,6 @@ ExecStart=/home/blind/internvl3/myenv/bin/python -u /home/blind/internvl3/Intern
 
 Restart=always
 RestartSec=5
-KillSignal=SIGTERM
-TimeoutStopSec=20
 
 [Install]
 WantedBy=multi-user.target
